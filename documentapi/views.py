@@ -1,3 +1,5 @@
+import json
+
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.parsers import JSONParser
@@ -7,6 +9,9 @@ from documentapi.models import Document
 from documentapi.serializers import DocumentSerializer
 
 from django.core.files.storage import default_storage
+
+from documentapi.upload_file import upload
+from istv_profiler.auth import auth
 
 
 # Create your views here.
@@ -18,21 +23,27 @@ def document_api(request, id=0):
         documents_serializer = DocumentSerializer(documents, many=True)
         return JsonResponse(documents_serializer.data, safe=False)
     elif request.method == 'POST':
-        department_data = JSONParser().parse(request)
-        documents_serializer = DocumentSerializer(data=department_data)
+        username = auth(request)
+        upload(request)
+        document_data = json.loads(request.POST['document'])
+        documents_serializer = DocumentSerializer(data=document_data)
+        # documents_serializer.creator = username
+        print(document_data)
+        print(documents_serializer.is_valid())
         if documents_serializer.is_valid():
             documents_serializer.save()
             return JsonResponse("Added Successfully", safe=False)
         return JsonResponse("Failed to Add", safe=False)
     elif request.method == 'PUT':
-        department_data = JSONParser().parse(request)
-        department = Document.objects.get(DepartmentId=department_data['DepartmentId'])
-        documents_serializer = DocumentSerializer(department, data=department_data)
+        document_data = JSONParser().parse(request)
+        print(document_data)
+        document = Document.objects.get(documentId=document_data['id'])
+        documents_serializer = DocumentSerializer(document, data=document_data)
         if documents_serializer.is_valid():
             documents_serializer.save()
             return JsonResponse("Updated Successfully", safe=False)
         return JsonResponse("Failed to Update")
     elif request.method == 'DELETE':
-        department = Document.objects.get(DepartmentId=id)
-        department.delete()
+        document = Document.objects.get(documentId=id)
+        document.delete()
         return JsonResponse("Deleted Successfully", safe=False)

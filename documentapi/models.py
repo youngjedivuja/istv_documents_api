@@ -10,3 +10,7 @@ class Document(models.Model):
     owner = models.CharField(max_length=20)
     ownerId = models.IntegerField()
     roles = models.CharField(max_length=200)
+
+
+def set_creator(self, creator):
+    self.creator = creator
