@@ -19,8 +19,14 @@ from istv_profiler.auth import auth
 @csrf_exempt
 def document_api(request, id=0):
     if request.method == 'GET':
-        documents = Document.objects.all()
-        documents_serializer = DocumentSerializer(documents, many=True)
+        documents = {}
+        if bool(request.GET.dict()):
+            id = request.GET['q']
+            documents = Document.objects.get(documentId=id)
+
+        else:
+            documents = Document.objects.all()
+        documents_serializer = DocumentSerializer(documents)
         return JsonResponse(documents_serializer.data, safe=False)
     elif request.method == 'POST':
         username = auth(request)
